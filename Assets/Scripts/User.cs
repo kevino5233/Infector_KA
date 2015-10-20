@@ -48,7 +48,7 @@ public class User : MonoBehaviour, IComparable<User>{
 			depth = value;
 		}
 	}
-
+    // Returns the position of this script's GameObject.
 	public Vector3 Position {
 		get {
 			return transform.position;
@@ -67,6 +67,7 @@ public class User : MonoBehaviour, IComparable<User>{
         Vector3 offset = unit * length;
         Vector3 newpos = origin + offset;
         transform.position = newpos;
+        // Draws the arrows. Sorry the code looks awful.
         if (coach_id != -1){
             origin.z = -5.1f;
             newpos.z = -5.1f;
@@ -89,7 +90,6 @@ public class User : MonoBehaviour, IComparable<User>{
             GetComponent<LineRenderer>().SetPosition(4, arrow2);
         }
     }
-
 	// Contains UIDs of this user's students. This will be empty if
 	// this user is not a coach.
 	private List<int> students;
@@ -98,14 +98,13 @@ public class User : MonoBehaviour, IComparable<User>{
 			return students;
 		}
 	}
-
 	// Hueristic for determing infection.
 	public int Priority {
 		get {
 			return students.Count;
 		}
 	}
-
+    // Initialization.
 	public void Awake(){
 		user_id = -1;
 		coach_id = -1;
@@ -113,12 +112,13 @@ public class User : MonoBehaviour, IComparable<User>{
 		depth = 0;
 		students = new List<int>();
 	}
-
+    // Adds a user as this user's student.
 	public void AddStudent(int uid){
 		students.Add(uid);
 		UpdateTexture();
 	}
-
+    // Updates the sprite based on whether this is a student or teacher. Also
+    // updates the color when a new feature is implemented.
 	private void UpdateTexture(){
 		GetComponent<SpriteRenderer>().color = UserManager.instance.GetColor(feature_id); 
 		if (students.Count == 0){
@@ -129,11 +129,11 @@ public class User : MonoBehaviour, IComparable<User>{
 				UserManager.instance.sprite_coach;
 		}
 	}
-
+    // Comparator. May have been used for implementing quota.
 	public int CompareTo(User other){
 		return this.Priority.CompareTo(other.Priority);
 	}
-
+    // Starts infection with this user if clicked on.
     public void OnMouseOver(){
         if (!UserManager.instance.Busy && Input.GetMouseButtonDown(0)){
             UserManager.instance.Infect(user_id);

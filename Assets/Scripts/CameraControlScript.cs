@@ -4,7 +4,7 @@ using System.Collections;
 public class CameraControlScript : MonoBehaviour {
 
 	private float deadzone = .1f;
-	private float MAX_VEL = .1f;
+	private float MAX_VEL = .2f;
 
 	private uint frame_counter = 0;
 

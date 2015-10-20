@@ -1,6 +1,6 @@
 # Infector
 
-This is a Unity application that simulates limited deployment for A/B testing. In this application, certain Users are "coaches" to other Users, and we want to keep the software version across coaches and their users. However, this can lead to "total infection" and can lead to too many people having one version of the software. Thus we want to implement "limited infection" so that we have better data set.
+This is a Unity application that simulates limited deployment for A/B testing. In this application, certain users are "coaches" to other users, and we want to keep the software version across coaches and their users. However, this can lead to "total infection" and can lead to too many people having one version of the software. Thus we want to implement "limited infection" so that we have better data set.
 
 The basic philosophy around my implementation is that while normal users may not understand A/B testing, coaches have at least some knowledge and more importantly consistency across coaches and their students who are not coaches is more important than consistency across coaches and their student-coaches.
 
@@ -10,6 +10,27 @@ You can move across the graph simply by moving your mouse to the edge of the win
 
 To begin infection, click on the user as the source of the infection. To do limited infection, check the "limited" box in the top right.
 
-The application will load a default graph data set. If you wish to use your own data set, you can do so using a JSON file named "data.json". The JSON should be of JSON Array format, with each entry having a field "uid" for the user. There should also be an array "students" with unique ids of students of this user. See data.json.sample for an example.
+The application will load a default graph data set. If you wish to use your own data set, you can do so using a JSON file named "data.json". The JSON should be of JSON Array format, with each entry having a field "uid" for the user. There should also be an array "students" with unique ids of students of this user. See "data.json.sample#" for examples.
 
 There are some sample tests that you may build. They all have .sample# file endings.
+
+# Testing
+
+There are no formal tests for this application, due to it being in Unity. However, generally the application should follow this logic.
+
+- A "Total infection" will not affect graphs not connected to the original infector.
+- Partial infection will infect every other layer of students.
+- A layer of students is simply a coach and his students.
+- The exception to this rule is if a student of a coach is also a coach.
+
+# Flaws
+
+- Spaghetti code in some areas.
+- Navigation is not ideal.
+- Testing could be made easier by labeling the users with their UIDs.
+    - I would simply have to give instructions on which user to infect when and state the desired color for each user.
+- A partial infection of a single class will have the same result as a total infection.
+- Another conjecture from the first flaw is that the current partial infection method can still unintentionally infect too many users, depending on the topology of the student-coach relations.
+- Despite there being a field for it, this application does NOT support limited infection with quotas.
+    - If I were to do this, I would keep a counter of users I have infected.
+    - "Best fit" to the remaining number of users to be infected would be the hueristic to determine priority for infection.

@@ -77,6 +77,7 @@ public class UsersTestScript : MonoBehaviour {
                     users[uid] = true;
                     UserManager.instance.AddUser(uid);
                 }
+                Debug.Log(uid);
                 if (user.list.Count == 2){
                     foreach(JSONObject student in user.list[1].list){
                         int sid = (int)student.n;
