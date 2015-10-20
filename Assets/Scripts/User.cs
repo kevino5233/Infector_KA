@@ -68,6 +68,8 @@ public class User : MonoBehaviour, IComparable<User>{
         Vector3 newpos = origin + offset;
         transform.position = newpos;
         if (coach_id != -1){
+            origin.z = -5.1f;
+            newpos.z = -5.1f;
             float cos_prime_1 = Mathf.Cos(Mathf.Deg2Rad * (angle - theta_prime));
             float cos_prime_2 = Mathf.Cos(Mathf.Deg2Rad * (angle + theta_prime));
             float sin_prime_1 = Mathf.Sin(Mathf.Deg2Rad * (angle - theta_prime));
@@ -131,4 +133,10 @@ public class User : MonoBehaviour, IComparable<User>{
 	public int CompareTo(User other){
 		return this.Priority.CompareTo(other.Priority);
 	}
+
+    public void OnMouseOver(){
+        if (!UserManager.instance.Busy && Input.GetMouseButtonDown(0)){
+            UserManager.instance.Infect(user_id);
+        }
+    }
 }

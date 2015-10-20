@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,20 +7,27 @@ using System.Collections.Generic;
 public class UserManager : MonoBehaviour {
 	public static UserManager instance = null;
 
+    public Text text_quota;
+
 	public Transform user_trans;
 
 	public Sprite sprite_student;
 	public Sprite sprite_coach;
 
+    private bool infect_limited = false;
+    private bool infect_quota = false;
+    private int quota = -1;
+
+    private int jump_count = 0;
+
 	private Color[] colors = 
-		{Color.cyan, Color.gray, Color.green, 
-		Color.magenta, Color.white, Color.yellow};
+		{Color.cyan, Color.red, Color.green,
+		Color.magenta, Color.blue, Color.yellow};
 
 	private enum TraverseModes {
 		Initial,
 		Render,
-		Infect,
-        LimitedInfect
+		Infect
 	}
 
 	private int feature_count = 0;
@@ -81,16 +89,32 @@ public class UserManager : MonoBehaviour {
 		}
 		independent_users.Remove(uid);
 	}
-
-	private void TraverseGraph(TraverseModes mode){
-		// set this later
+    public void ToggleLimited(){
+        infect_limited = !infect_limited;
+    }
+    public void ToggleQuota(){
+        infect_quota = !infect_quota;
+    }
+    public void SetQuota(){
+        try {
+            quota = Int32.Parse(text_quota.text);
+        } catch (Exception e){
+            Debug.Log("Quota must be an integer");
+        }
+    }
+    // spaghettios.
+	private void TraverseGraph(TraverseModes mode, int uid_start){
+        Dictionary<int, bool> visited = new Dictionary<int, bool>();
+        float ind_dist = Mathf.Pow(2, max_depth + 1) * length_scale;
 		Queue<User> bfs_queue = new Queue<User>();
-        float ind_dist = Mathf.Pow(2, max_depth) * length_scale;
         foreach (int uid in independent_users){
             if (mode == TraverseModes.Render){
                 users[uid].SetPosition(new Vector3(0, 0, -5), ind_dist, angle);
                 angle += angle_d;
                 angle %= 360;
+            } else if (mode != TraverseModes.Initial){
+                bfs_queue.Enqueue(users[uid_start]);
+                break;
             }
             bfs_queue.Enqueue(users[uid]);
         }
@@ -104,15 +128,27 @@ public class UserManager : MonoBehaviour {
 		busy = true;
 		while (bfs_queue.Count > 0){
 			User curr = bfs_queue.Dequeue();
-            if (mode == TraverseModes.LimitedInfect){
+            if (visited.ContainsKey(curr.UID) && visited[curr.UID]){
+                continue;
+            }
+            visited[curr.UID] = true;
+            if (infect_limited){
                 int old = curr.Feature;
                 curr.Feature = feature_count;
-                if (curr.Coach != -1 &&
+                if (curr.Coach != -1){
+                    if(curr.Priority > 0 &&
                         users[curr.Coach].Feature == feature_count){
-                    curr.Feature = old;
+                        curr.Feature = old;
+                    } else if (curr.Priority == 0){
+                        curr.Feature = users[curr.Coach].Feature;
+                    }
                 }
             } else {
                 curr.Feature = feature_count;
+            }
+            if (!(curr.Coach == -1 ||
+                    (visited.ContainsKey(curr.Coach) && visited[curr.Coach]))){
+                bfs_queue.Enqueue(users[curr.Coach]);
             }
             if (curr.Priority == 0){
                 continue;
@@ -132,34 +168,37 @@ public class UserManager : MonoBehaviour {
 					angle += angle_d;
 					angle %= 360;
 				}
-				bfs_queue.Enqueue(user);
+				if (!(visited.ContainsKey(user.UID) && visited[user.UID])){
+                    bfs_queue.Enqueue(user);
+                }
 			}
 		}
 		busy = false;
 	}
 
-    public void RefocusCamera(){
+    public void Jump(){
 		Vector3 cam_pos = Camera.main.transform.position;
-		Vector3 user_pos = users[independent_users[0]].transform.position;
+		Vector3 user_pos = 
+            users[independent_users[jump_count]].transform.position;
 		Vector3 new_pos = new Vector3(user_pos.x, user_pos.y, cam_pos.z);
 		Camera.main.transform.position = new_pos;
+        jump_count++;
+        jump_count %= independent_users.Count;
     }
 
 	public void RenderGraph(){
 		// Calculate max_depth of tree
-		TraverseGraph(TraverseModes.Initial);
+		TraverseGraph(TraverseModes.Initial, -1);
 		// Reorganizes users
-		TraverseGraph(TraverseModes.Render);
-        RefocusCamera();
+		TraverseGraph(TraverseModes.Render, -1);
+        Jump();
 	}
 
-	public void FullInfection(){
-		++feature_count;
-		TraverseGraph(TraverseModes.Infect);
-	}
-
-	public void LimitedInfection(){
-		++feature_count;
-		TraverseGraph(TraverseModes.LimitedInfect);
-	}
+    public void Infect(int uid){
+        if (infect_limited && infect_quota && quota == -1){
+            return;
+        }
+        ++feature_count;
+        TraverseGraph(TraverseModes.Infect, uid);
+    }
 }
