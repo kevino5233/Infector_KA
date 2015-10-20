@@ -53,16 +53,41 @@ public class User : MonoBehaviour, IComparable<User>{
 		get {
 			return transform.position;
 		}
-		set {
-			transform.position = value;
-			if (coach_id != -1){
-				GetComponent<LineRenderer>().SetPosition(0, value);
-				GetComponent<LineRenderer>().SetPosition(
-					1,
-					UserManager.instance.GetUser(coach_id).transform.position);
-			}
-		}
 	}
+    // used to draw the arrow points
+    private int theta_prime = 5;
+    private float arrow_len = .5f;
+    // Sets this user's position in the scene and draws the line to
+    // their coach, if they exist.
+    // Spaghettios.
+    public void SetPosition(Vector3 origin, float length, int angle){
+        float cos =	Mathf.Cos(Mathf.Deg2Rad * angle);
+        float sin =	Mathf.Sin(Mathf.Deg2Rad * angle);
+        Vector3 unit = new Vector3(cos, sin, 0);
+        Vector3 offset = unit * length;
+        Vector3 newpos = origin + offset;
+        transform.position = newpos;
+        if (coach_id != -1){
+            float cos_prime_1 = Mathf.Cos(Mathf.Deg2Rad * (angle - theta_prime));
+            float cos_prime_2 = Mathf.Cos(Mathf.Deg2Rad * (angle + theta_prime));
+            float sin_prime_1 = Mathf.Sin(Mathf.Deg2Rad * (angle - theta_prime));
+            float sin_prime_2 = Mathf.Sin(Mathf.Deg2Rad * (angle + theta_prime));
+            Vector3 unit_prime_1 =
+                new Vector3(cos_prime_1, sin_prime_1, 0);
+            Vector3 unit_prime_2 =
+                new Vector3(cos_prime_2, sin_prime_2, 0);
+            Vector3 arrow1 = unit_prime_1 * (length - arrow_len);
+            arrow1 += origin;
+            Vector3 arrow2 = unit_prime_2 * (length - arrow_len);
+            arrow2 += origin;
+            GetComponent<LineRenderer>().SetPosition(0, origin);
+            GetComponent<LineRenderer>().SetPosition(1, newpos);
+            GetComponent<LineRenderer>().SetPosition(2, arrow1);
+            GetComponent<LineRenderer>().SetPosition(3, newpos);
+            GetComponent<LineRenderer>().SetPosition(4, arrow2);
+        }
+    }
+
 	// Contains UIDs of this user's students. This will be empty if
 	// this user is not a coach.
 	private List<int> students;

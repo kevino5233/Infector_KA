@@ -1,0 +1,30 @@
+[
+    {
+        uid: 1,
+        students: [2, 3, 4, 5]
+    },
+    {
+        uid: 2,
+        students: [6, 7]
+    },
+    {
+        uid: 3,
+    },
+    {
+        uid: 4,
+    },
+    {
+        uid: 5,
+        students: [8]
+    },
+    {
+        uid: 6,
+        students: [2, 3, 4, 5]
+    },
+    {
+        uid: 7,
+    },
+    {
+        uid: 8,
+    }
+]

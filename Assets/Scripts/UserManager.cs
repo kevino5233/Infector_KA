@@ -17,8 +17,9 @@ public class UserManager : MonoBehaviour {
 
 	private enum TraverseModes {
 		Initial,
+		Render,
 		Infect,
-		Render
+        LimitedInfect
 	}
 
 	private int feature_count = 0;
@@ -69,7 +70,6 @@ public class UserManager : MonoBehaviour {
 	// Creates student-teacher relation between two users.
 	public void SetStudent(int uid, int cid){
 		if (uid == cid){
-			Debug.Log("User can not be their own coach.");
 			return;
 		}
 		users[uid].Coach = cid;
@@ -82,24 +82,19 @@ public class UserManager : MonoBehaviour {
 		independent_users.Remove(uid);
 	}
 
-	// read from JSON file
-	public void Load(){
-	}
-
 	private void TraverseGraph(TraverseModes mode){
 		// set this later
-		bool limited = false;
 		Queue<User> bfs_queue = new Queue<User>();
-		float ind_dist = Mathf.Pow(2, max_depth) * length_scale;
-		foreach (int uid in independent_users){
-			float offset_x = Mathf.Cos(Mathf.Deg2Rad * angle) * ind_dist;
-			float offset_y = Mathf.Sin(Mathf.Deg2Rad * angle) * ind_dist;
-			users[uid].transform.position = new Vector3(offset_x, offset_y, -5);
-			bfs_queue.Enqueue(users[uid]);
-			angle += angle_d;
-			angle %= 360;
-		}
-		float[] powers = null;
+        float ind_dist = Mathf.Pow(2, max_depth) * length_scale;
+        foreach (int uid in independent_users){
+            if (mode == TraverseModes.Render){
+                users[uid].SetPosition(new Vector3(0, 0, -5), ind_dist, angle);
+                angle += angle_d;
+                angle %= 360;
+            }
+            bfs_queue.Enqueue(users[uid]);
+        }
+        float[] powers = null;
 		if (mode == TraverseModes.Render){
 			powers = new float[max_depth];
 			for (int i = 0; i < max_depth; i++){
@@ -109,30 +104,31 @@ public class UserManager : MonoBehaviour {
 		busy = true;
 		while (bfs_queue.Count > 0){
 			User curr = bfs_queue.Dequeue();
-			curr.Feature = feature_count;
+            if (mode == TraverseModes.LimitedInfect){
+                int old = curr.Feature;
+                curr.Feature = feature_count;
+                if (curr.Coach != -1 &&
+                        users[curr.Coach].Feature == feature_count){
+                    curr.Feature = old;
+                }
+            } else {
+                curr.Feature = feature_count;
+            }
+            if (curr.Priority == 0){
+                continue;
+            }
 			List<User> students = new List<User>();
 			foreach(int uid in curr.Students){
 				students.Add(users[uid]);
-			}
-			if (limited){
-				students.Sort();
 			}
 			foreach (User user in students){
 				if (mode == TraverseModes.Initial){
 					user.Depth = curr.Depth + 1;
 					max_depth = Mathf.Max(max_depth, user.Depth);
 				} else if (mode == TraverseModes.Render){
-					float offset_x = 
-						length_scale *
-						powers[user.Depth - 1] *
-						Mathf.Cos(Mathf.Deg2Rad * angle);
-					float offset_y =
-						length_scale *
-						powers[user.Depth - 1] *
-						Mathf.Sin(Mathf.Deg2Rad * angle);
-					Vector3 offset = new Vector3(offset_x, offset_y, 0);
-					Vector3 origin = users[user.Coach].transform.position;
-					user.Position = offset + origin;
+                    float length = length_scale * powers[user.Depth - 1];
+                    Vector3 origin = users[user.Coach].Position;
+                    user.SetPosition(origin, length, angle);
 					angle += angle_d;
 					angle %= 360;
 				}
@@ -142,20 +138,28 @@ public class UserManager : MonoBehaviour {
 		busy = false;
 	}
 
+    public void RefocusCamera(){
+		Vector3 cam_pos = Camera.main.transform.position;
+		Vector3 user_pos = users[independent_users[0]].transform.position;
+		Vector3 new_pos = new Vector3(user_pos.x, user_pos.y, cam_pos.z);
+		Camera.main.transform.position = new_pos;
+    }
+
 	public void RenderGraph(){
 		// Calculate max_depth of tree
 		TraverseGraph(TraverseModes.Initial);
 		// Reorganizes users
 		TraverseGraph(TraverseModes.Render);
-		Vector3 cam_pos = Camera.main.transform.position;
-		Vector3 user_pos = users[independent_users[0]].transform.position;
-		Vector3 new_pos = new Vector3(user_pos.x, user_pos.y, cam_pos.z);
-		Camera.main.transform.position = new_pos;
+        RefocusCamera();
 	}
 
-	public void StartInfection(int patient_zero){
+	public void FullInfection(){
+		++feature_count;
 		TraverseGraph(TraverseModes.Infect);
-		feature_count++;
 	}
 
+	public void LimitedInfection(){
+		++feature_count;
+		TraverseGraph(TraverseModes.LimitedInfect);
+	}
 }
