@@ -14,6 +14,10 @@ The application will load a default graph data set. If you wish to use your own 
 
 There are some sample tests that you may build. They all have .sample# file endings.
 
+# Graphing
+
+Because Unity does not come with graphing utilities, I decided to write my own. The graph used here is (mostly) a Directed Acyclic Graph where the a given user's edges represent their students. Breadth First Search is the search algorithm I use for all graph traversal. The graph visualization begins by determining users with no coaches (i.e. entry points to independent graphs). These users are placed around a center with a radius of 2^(max_depth + 1) where max_depth is the greatest distance between the graph's entry point and a given node in that graph. Then for every node, they are rotated around the parent (coach) node with a radius of length_scale * 2^(max_depth - depth - 1) where length_scale is an arbitrary length between the nodes and scales with the exponent. In other words, the closer we get to leaves in the graph, the smaller the distance between users becomes in the visualization. I use Unity's line renderer to draw the arrows that show the direction of edges. Angles are calculated in a sort of "clock" where everytime an angle used, the angle "ticks" a certain number of degrees. This becomes all the more clear once opening the application.
+
 # Testing
 
 There are no formal tests for this application, due to it being in Unity. However, generally the application should follow this logic.
